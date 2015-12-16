@@ -363,21 +363,25 @@ iproute2_post_start()
 	yesno "$policyroute_order" || _iproute2_policy_routing
 
 	if _iproute2_ipv6_tentative; then
-		einfon "Waiting for IPv6 addresses (${_dad_timeout} seconds) "
-		while [ $_dad_timeout -gt 0 ]; do
-			_iproute2_ipv6_tentative || break
-			sleep 1
-			: $(( _dad_timeout -= 1 ))
-			printf "."
-		done
+		if [ $_dad_timeout -gt 0 ]; then
+			einfon "Waiting for IPv6 addresses (${_dad_timeout} seconds) "
+			while [ $_dad_timeout -gt 0 ]; do
+				_iproute2_ipv6_tentative || break
+				sleep 1
+				: $(( _dad_timeout -= 1 ))
+				printf "."
+			done
 
-		echo ""
+			echo ""
 
-		if [ $_dad_timeout -le 0 ]; then
-			eend 1
-			return 1
+			if [ $_dad_timeout -le 0 ]; then
+				eend 1
+				return 1
+			else
+				eend 0
+			fi
 		else
-			eend 0
+			ewarn "At least one IPv6 address is in tentative state but we won't wait due to DAD_TIMEOUT=0 option"
 		fi
 	fi
 
